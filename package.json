@@ -2,7 +2,7 @@
   "name": "nodejs-expressjs-mongodb-base-project",
   "private": true,
   "version": "1.0.0",
-  "author": "TrungQuanDev - Một Lập Trình Viên",
+  "author": "QuyenDev",
   "description": "https://youtube.com/@trungquandev",
   "engines": {
     "node": ">=18.x"
@@ -17,17 +17,20 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.22.10",
-    "express": "^4.18.2"
+    "async-exit-hook": "^2.0.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongodb": "^6.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.22.10",
-    "@babel/core": "^7.22.10",
+    "@babel/core": "^7.26.0",
     "@babel/eslint-parser": "^7.22.10",
     "@babel/node": "^7.22.10",
     "@babel/plugin-transform-runtime": "^7.22.10",
-    "@babel/preset-env": "^7.22.10",
-    "babel-plugin-module-resolver": "^5.0.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "^8.47.0",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.1.7"
   }
 }
