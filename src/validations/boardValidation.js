@@ -24,12 +24,10 @@ const createNew = async (req, res, next) => {
     description: joi.string().optional().min(1).max(256).trim().strict()
   })
   try {
-    // console.log(res.body)
     //set abortEarly: false to show all errors
     await correctCondition.validateAsync(req.body, { abortEarly: false })
-
-    // next()
-    res.status(StatusCodes.CREATED).json({ message: 'POST from validation: API create a board' })
+    //validate thành công thì chuyển tiếp sang controller
+    next()
   } catch (error) {
     // console.log(error)
     // console.log(new Error(error).message)
