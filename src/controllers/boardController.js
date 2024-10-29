@@ -4,13 +4,17 @@
  * "A bit of fragrance clings to the hand that gives flowers!"
  */
 import { StatusCodes } from 'http-status-codes'
-import ApiError from '~/utils/ApiError.js'
+// import ApiError from '~/utils/ApiError.js'
+import { boardService } from '~/services/boardService.js'
 
 const createNew = async (req, res, next) => {
   try {
     // console.log(res.body)
-    // throw new ApiError(StatusCodes.BAD_REQUEST, 'BAD REQUEST')
-    res.status(StatusCodes.CREATED).json({ message: 'POST from controller: API create a board' })
+
+    //điều hướng đến service để xử lý
+    const createBoard = await boardService.createNew(req.body)
+    //có kết quả trả về client
+    res.status(StatusCodes.CREATED).json(createBoard)
   } catch (error) { next(error)}
 }
 
