@@ -44,9 +44,21 @@ const findOneById = async (id) => {
   }
 }
 
+
+//query tổng hợp (arregate) để lấy toàn bộ Column và card thuộc về Board
+const getDetails = async (id) => {
+  try {
+    //tạm thời giống như findOneById
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(id) })
+  } catch (error) { 
+    throw new Error(error)
+  }
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
   createNew,
-  findOneById
+  findOneById,
+  getDetails
 }
