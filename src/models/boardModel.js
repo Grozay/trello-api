@@ -1,20 +1,64 @@
-import joi from 'joi'
 
-//define conlection (name, schema)
-const BOARD_CONLECTION_NAME = 'boards'
+import Joi from 'joi'
+import { ObjectId } from 'mongodb'
+import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
+import { GET_DB } from '~/config/mongodb'
+// Define Collection (name & schema)
+const BOARD_COLLECTION_NAME = 'boards'
+const BOARD_COLLECTION_SCHEMA = Joi.object({
+  title: Joi.string().required().min(3).max(50).trim().strict(),
+  slug: Joi.string().required().min(3).trim().strict(),
+  description: Joi.string().required().min(3).max(256).trim().strict(),
 
-const BOARD_CONLECTION_SCHEMA = joi.object({
-  title: joi.string().required().min(3).max(50).trim().strict(),
-  slug: joi.string().required().min(3).trim().strict(),
-  description: joi.string().optional().min(1).max(256).trim().strict(),
+  // Lưu ý các item trong mảng columnOrderIds là ObjectId nên cần thêm pattern cho chuẩn nhé, (lúc quay video số 57 mình quên nhưng sang đầu video số 58 sẽ có nhắc lại về cái này.)
+  columnOrderIds: Joi.array().items(
+    Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ).default([]),
 
-  columnOrderIds: joi.array().items(joi.string().default([])),
-  createdAt: joi.date().timestamp('javascript').default(Date.now()),
-  updatedAt: joi.date().timestamp('javascript').default(null),
-  _destroy: joi.boolean().default(false)
+  createdAt: Joi.date().timestamp('javascript').default(Date.now),
+  updatedAt: Joi.date().timestamp('javascript').default(null),
+  _destroy: Joi.boolean().default(false)
 })
 
+//validate dữ liệu trước khi tạo mới trả về dữ liệu đã validate
+const validateBeforeCreate = async (data) => {
+  return await BOARD_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })
+}
+
+const createNew = async (data) => {
+  try {
+    const validatedData = await validateBeforeCreate(data)
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(validatedData)
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const findOneById = async (id) => {
+  try {
+    //Nếu từ client gửi lên id là string thì cần convert lại
+    //thành ObjectId do ObjectId là kiểu dữ liệu của MongoDB nên gửi string lên sẽ trả về null
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(id) })
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+
+//query tổng hợp (arregate) để lấy toàn bộ Column và card thuộc về Board
+const getDetails = async (id) => {
+  try {
+    //tạm thời giống như findOneById
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).findOne({ _id: new ObjectId(id) })
+  } catch (error) { 
+    throw new Error(error)
+  }
+}
+
 export const boardModel = {
-  BOARD_CONLECTION_NAME,
-  BOARD_CONLECTION_SCHEMA
+  BOARD_COLLECTION_NAME,
+  BOARD_COLLECTION_SCHEMA,
+  createNew,
+  findOneById,
+  getDetails
 }
