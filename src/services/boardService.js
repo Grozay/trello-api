@@ -9,6 +9,7 @@ import { slugify } from '~/utils/formatters'
 import { boardModel } from '~/models/boardModel'
 import { ApiError } from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
+import { cloneDeep } from 'lodash'
 
 const createNew = async (reqBody) => {
   try {
@@ -37,9 +38,18 @@ const createNew = async (reqBody) => {
 const getDetails = async (boardId) => {
   try {
     const boardDetails = await boardModel.getDetails(boardId)
-
     if (!boardDetails) throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found')
-    return boardDetails
+    const resBoard = cloneDeep(boardDetails)
+    //Đưa card vào đúng column của nó
+    resBoard.columns.forEach((column) => {
+      //So sánh ObjectId với nhau equals nó của mongod nên ko cần chuyển về string vì nó đã support
+      column.cards = resBoard.cards.filter((card) => card.columnId.equals(column._id))
+      //Cách khác
+      // column.cards = resBoard.cards.filter((card) => card.columnId.toString() === column._id.toString())
+    })
+    //Xóa cards ra khỏi resBoard vì không cần thiết phải trả về cho FE
+    delete resBoard.cards
+    return resBoard
   } catch (error) {
     throw error
   }
