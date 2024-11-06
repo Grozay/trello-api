@@ -19,6 +19,8 @@ module.exports = {
   plugins: [],
   rules: {
     // Common
+    // 'no-undef': 0,
+    'no-useless-catch': 0,
     'no-console': 1,
     'no-extra-boolean-cast': 0,
     'no-lonely-if': 1,
