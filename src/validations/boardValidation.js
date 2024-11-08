@@ -21,8 +21,8 @@ const createNew = async (req, res, next) => {
       'string.max': 'Title must be at most 50 characters long',
       'string.trim': 'Title must not have leading or trailing whitespace'
     }),
-    description: Joi.string().optional().min(1).max(256).trim().strict(),
-    type: Joi.string().valid(BOARD_TYPES.PUBLIC, BOARD_TYPES.PRIVATE).strict()
+    description: Joi.string().required().optional().min(1).max(256).trim().strict(),
+    type: Joi.string().required().valid(BOARD_TYPES.PUBLIC, BOARD_TYPES.PRIVATE).strict()
   })
   try {
     //set abortEarly: false to show all errors
@@ -33,6 +33,25 @@ const createNew = async (req, res, next) => {
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
   }
 }
+
+const update = async (req, res, next) => {
+  const correctCondition = Joi.object({
+    title: Joi.string().min(3).max(50).trim().strict(),
+    description: Joi.string().optional().min(1).max(256).trim().strict(),
+    type: Joi.string().valid(BOARD_TYPES.PUBLIC, BOARD_TYPES.PRIVATE).strict()
+  })
+  try {
+    await correctCondition.validateAsync(req.body, {
+      abortEarly: false,
+      //cho phép các thuộc tính không được validate bằng joi vẫn update nó mà không báo lỗi chỉ validate các thuộc tính được validate được định nghĩa
+      allowUnknown: true
+    })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
 export const boardValidation = {
-  createNew
+  createNew,
+  update
 }
