@@ -122,6 +122,21 @@ const update = async (boardId, updateData) => {
   }
 }
 
+//nhiệm vụ của func này là pull một giá trị columnId vào mảng columnOrderIds trong collection board
+//pull là lấy phần tử của mảng rồi xóa nó đi khỏi mảng
+const pullColumnOrderIds = async (column) => {
+  try {
+    const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(column.boardId) },
+      { $pull: { columnOrderIds: new ObjectId(column._id) } },
+      { returnDocument: 'after' }
+    )
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
@@ -129,5 +144,6 @@ export const boardModel = {
   findOneById,
   getDetails,
   pushColumnOrderIds,
+  pullColumnOrderIds,
   update
 }
