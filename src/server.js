@@ -32,10 +32,10 @@ const START_SERVER = () => {
   //middleware xử lí lỗi tập trung 
   app.use(errorHandlingMiddleware)
 
-  if (env.NODE_ENV === 'production') {
+  if (env.BUILD_MODE === 'production') {
     //production
-    app.listen(process.env.PORT, process.env.HOST, () => {
-      console.log(`3.Production: Hello ${ process.env.AUTHOR }, I am running at ${ process.env.PORT }/`)
+    app.listen(process.env.PORT, () => {
+      console.log(`3.Production: Hello ${ env.AUTHOR }, BE Server is runing successfully at port: ${ process.env.PORT }/`)
     })
   } else {
     //dev
