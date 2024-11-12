@@ -32,9 +32,17 @@ const START_SERVER = () => {
   //middleware xử lí lỗi tập trung 
   app.use(errorHandlingMiddleware)
 
-  app.listen(env.APP_PORT, env.APP_HOST, () => {
-    console.log(`3. Hello ${ env.AUTHOR }, I am running at ${ env.APP_HOST }:${ env.APP_PORT }/`)
-  })
+  if (env.NODE_ENV === 'production') {
+    //production
+    app.listen(process.env.PORT, process.env.HOST, () => {
+      console.log(`3.Production: Hello ${ process.env.AUTHOR }, I am running at ${ process.env.PORT }/`)
+    })
+  } else {
+    //dev
+    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+      console.log(`3. Hello ${ env.AUTHOR }, I am running at ${ env.LOCAL_DEV_APP_HOST }:${ env.LOCAL_DEV_APP_PORT }/`)
+    })
+  }
 
   // Thực hiện các tác vụ Clean up
   exitHook(() => {
