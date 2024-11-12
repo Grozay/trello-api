@@ -6,7 +6,7 @@
 
 //những domain được phép truy cập vào tài nguyên của server
 export const WHITELIST_DOMAINS = [
-  'http://localhost:5173'
+  // 'http://localhost:5173' //không cần thiết localhost nữa vì file config/cors đã luôn cho môi trường dev rồi
   //đẩy lên domain chính thức
 ]
 
