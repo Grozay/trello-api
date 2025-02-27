@@ -44,6 +44,7 @@ const START_SERVER = () => {
     })
   }
 
+
   // Thực hiện các tác vụ Clean up
   exitHook(() => {
     console.log('4. Server is shutting down...')
