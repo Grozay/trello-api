@@ -4,6 +4,8 @@ import { StatusCodes } from 'http-status-codes'
 import { v4 as uuidv4 } from 'uuid'
 import bcrypt from 'bcryptjs'
 import { pickUser } from '../utils/formatters'
+import { WEBSITE_DOMAIN } from '~/utils/constants'
+import { brevoProvider } from '~/providers/BrevoProvider'
 
 const createNew = async (reqBody) => {
   try {
@@ -30,6 +32,16 @@ const createNew = async (reqBody) => {
     const getNewUser = await userModel.findOneById(createdUser.insertedId)
 
     //gửi email cho người dùng xác thực tài khoản
+    const verificationLink = `${WEBSITE_DOMAIN}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`
+
+    const customeSubject = 'Please verify your email before using our service'
+    const htmlContent = `
+			<h3>Here is your verificaiton link:</h3>
+			<a href="${verificationLink}">${verificationLink}</a>
+			<p>If you did not request this, please ignore this email.</p>
+		`
+
+    await brevoProvider.sendEmail(getNewUser.email, customeSubject, htmlContent)
 
     //return trả về dữ liệu cho phía Controller
     return pickUser(getNewUser)
