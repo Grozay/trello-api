@@ -81,13 +81,6 @@ const update = async (userId, updateData) => {
   }
 }
 
-const deleteManyByColumnId = async (id) => {
-  try {
-    return await GET_DB().collection(USER_COLLECTION_NAME).deleteMany({ _id: new ObjectId(id) })
-  } catch (error) {
-    throw new Error(error)
-  }
-}
 
 export const userModel = {
   USER_COLLECTION_NAME,
@@ -95,6 +88,5 @@ export const userModel = {
   createNew,
   findOneById,
   findOneByEmail,
-  update,
-  deleteManyByColumnId
+  update
 }

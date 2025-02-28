@@ -1,11 +1,13 @@
-import { userModel } from '../models/userModel'
-import { ApiError } from '../utils/ApiError'
+import { userModel } from '~/models/userModel'
+import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { v4 as uuidv4 } from 'uuid'
 import bcrypt from 'bcryptjs'
-import { pickUser } from '../utils/formatters'
+import { pickUser } from '~/utils/formatters'
 import { WEBSITE_DOMAIN } from '~/utils/constants'
 import { brevoProvider } from '~/providers/BrevoProvider'
+import JwtProvider from '~/providers/JwtProvider'
+import { env } from '~/config/environment'
 
 const createNew = async (reqBody) => {
   try {
@@ -50,6 +52,69 @@ const createNew = async (reqBody) => {
   }
 }
 
+const verifyAccount = async (reqBody) => {
+  try {
+    //query user trong db
+    const existUser = await userModel.findOneByEmail(reqBody.email)
+
+    //kiểm tra xem user có tồn tại trong db không
+    if (!existUser) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+
+    //kiểm tra xem user đã được xác thực chưa
+    if (existUser.isActive) {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'User already verified')
+    }
+
+    //kiểm tra xem token có đúng không
+    if (existUser.verifyToken !== reqBody.token) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid token')
+    }
+
+    //nếu mọi thứ đúng thì cập nhật trạng thái user
+    const updatedData = {
+      isActive: true,
+      verifyToken: null
+    }
+
+    const updatedUser = await userModel.update(existUser._id, updatedData)
+
+    return pickUser(updatedUser)
+  } catch (error) {
+    throw error
+  }
+}
+
+const login = async (reqBody) => {
+  try {
+    const existUser = await userModel.findOneByEmail(reqBody.email)
+    if (!existUser) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+    if (!existUser.isActive) {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not verified!')
+    }
+
+    if (!bcrypt.compareSync(reqBody.password, existUser.password)) {
+      console.log('Kiểu của ApiError:', typeof ApiError)
+      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid password')
+    }
+
+    //tạo token cho user
+    const userInfo = { _id: existUser._id, email: existUser.email }
+
+    //tạo access token và refresh token
+    const accessToken = await JwtProvider.generateToken(userInfo, env.ACCESS_TOKEN_SECRET_SIGNATURE, env.ACCESS_TOKEN_LIFE)
+    const refreshToken = await JwtProvider.generateToken(userInfo, env.REFRESH_TOKEN_SECRET_SIGNATURE, env.REFRESH_TOKEN_LIFE)
+
+    return { accessToken, refreshToken, ...pickUser(existUser) }
+  } catch (error) {
+    throw error
+  }
+}
 export const userService = {
-  createNew
+  createNew,
+  verifyAccount,
+  login
 }
