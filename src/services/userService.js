@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs'
 import { pickUser } from '~/utils/formatters'
 import { WEBSITE_DOMAIN } from '~/utils/constants'
 import { brevoProvider } from '~/providers/BrevoProvider'
-import JwtProvider from '~/providers/JwtProvider'
+import { JwtProvider } from '~/providers/JwtProvider'
 import { env } from '~/config/environment'
 
 const createNew = async (reqBody) => {
@@ -97,7 +97,6 @@ const login = async (reqBody) => {
     }
 
     if (!bcrypt.compareSync(reqBody.password, existUser.password)) {
-      console.log('Kiểu của ApiError:', typeof ApiError)
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid password')
     }
 
@@ -105,8 +104,17 @@ const login = async (reqBody) => {
     const userInfo = { _id: existUser._id, email: existUser.email }
 
     //tạo access token và refresh token
-    const accessToken = await JwtProvider.generateToken(userInfo, env.ACCESS_TOKEN_SECRET_SIGNATURE, env.ACCESS_TOKEN_LIFE)
-    const refreshToken = await JwtProvider.generateToken(userInfo, env.REFRESH_TOKEN_SECRET_SIGNATURE, env.REFRESH_TOKEN_LIFE)
+    const accessToken = await JwtProvider.generateToken(
+      userInfo,
+      env.ACCESS_TOKEN_SECRET_SIGNATURE,
+      env.ACCESS_TOKEN_LIFE
+      // 5
+    )
+    const refreshToken = await JwtProvider.generateToken(
+      userInfo,
+      env.REFRESH_TOKEN_SECRET_SIGNATURE,
+      env.REFRESH_TOKEN_LIFE
+    )
 
     return { accessToken, refreshToken, ...pickUser(existUser) }
   } catch (error) {
