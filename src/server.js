@@ -14,10 +14,19 @@ import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb.js'
 import { env } from '~/config/environment.js'
 import { APIs_V1 } from '~/routes/v1'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware.js'
-
+import cookieParser from 'cookie-parser'
 
 const START_SERVER = () => {
   const app = express()
+
+  //fix cái cache from disk của expressjs
+  app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+    next()
+  })
+
+  //config cookie parser
+  app.use(cookieParser())
   //enable cors
   app.use(cors(corsOptions))
   //enable req.body json data
