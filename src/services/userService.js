@@ -8,7 +8,7 @@ import { WEBSITE_DOMAIN } from '~/utils/constants'
 import { brevoProvider } from '~/providers/BrevoProvider'
 import { JwtProvider } from '~/providers/JwtProvider'
 import { env } from '~/config/environment'
-
+import { cloudinaryProvider } from '~/providers/CloudinaryProvider'
 const createNew = async (reqBody) => {
   try {
     //kiểm trangh email đã tồn tại trong hệ thống chưa
@@ -93,11 +93,11 @@ const login = async (reqBody) => {
       throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
     }
     if (!existUser.isActive) {
-      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not verified!')
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not active!')
     }
 
     if (!bcrypt.compareSync(reqBody.password, existUser.password)) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid password')
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your Email or Password is incorrect!')
     }
 
     //tạo token cho user
@@ -139,9 +139,55 @@ const refreshToken = async (clientRefreshToken) => {
   }
 }
 
+const update = async ( userId, reqBody, userAvatarFile ) => {
+  try {
+    //Query user và kiểm trang cho chắc chắn
+    const existUser = await userModel.findOneById(userId)
+    if (!existUser) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+
+    if (!existUser.isActive) {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not verified!')
+    }
+
+    //khởi tạo kết quả udpated user ban đầu là empty
+    let updatedUser = {}
+    // trường hợp change password
+    if (reqBody.current_password && reqBody.new_password) {
+      //kiểm tra xem current_password có đúng không
+      if (!bcrypt.compareSync(reqBody.current_password, existUser.password)) {
+        throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your current password is incorrect!')
+      }
+      //Nếu như current_password đúng thì chúng ta sẽ hash một mật khẩu mới và udpatê password mới vào db
+      updatedUser = await userModel.update(existUser._id, {
+        password: bcrypt.hashSync(reqBody.new_password, 8)
+      })
+    } else if (userAvatarFile) {
+      //Trường hợp upload file lên cloud cụ thể là cloudinary
+      const uploadResult = await cloudinaryProvider.streamUpload(userAvatarFile.buffer, 'users')
+      updatedUser = await userModel.update(existUser._id, {
+        avatar: uploadResult.secure_url
+      })
+      // Lưu lại ủl của cái file ảnh vào trong database
+      updatedUser = await userModel.update(existUser._id, {
+        avatar: uploadResult.secure_url
+      })
+    } else {
+      //Trường hợp update các thông tin chung, ví dụ như displayName
+      updatedUser = await userModel.update(existUser._id, reqBody)
+    }
+
+    return pickUser(updatedUser)
+  } catch (error) {
+    throw error
+  }
+}
+
 export const userService = {
   createNew,
   verifyAccount,
   login,
-  refreshToken
+  refreshToken,
+  update
 }

@@ -1,7 +1,8 @@
 import { StatusCodes } from 'http-status-codes'
 import { userService } from '~/services/userService'
 import ms from 'ms'
-import  ApiError from '~/utils/ApiError'
+import ApiError from '~/utils/ApiError'
+
 const createNew = async (req, res, next) => {
   try {
     const createUser = await userService.createNew(req.body)
@@ -21,7 +22,7 @@ const login = async (req, res, next) => {
   try {
     const result = await userService.login(req.body)
 
-    // xử lí trả về http only cookie cho phía trình duyệt 
+    // xử lí trả về http only cookie cho phía trình duyệt
     // về cái maxAge và thư viện ms: https://expressjs.com/en/api.html
     // Đối với cái maxAge thời gian sống của cookie thì chúng ta sẽ để tối đa là 14 ngày, tùy dự án. lưu ý thời gian sống của cookie khác với thời gian sống của token đừng nhầm lẫn nhé XD
     res.cookie('accessToken', result.accessToken, {
@@ -62,10 +63,21 @@ const refreshToken = async (req, res, next) => {
   } catch (error) { next(new ApiError(StatusCodes.FORBIDDEN, 'Please Sign In! (error from refresh token)')) }
 }
 
+const update = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const userAvatarFile = req.file
+    console.log('🚀 ~ update ~ userAvatarFile:', userAvatarFile)
+    const updateUser = await userService.update(userId, req.body, userAvatarFile)
+    res.status(StatusCodes.OK).json(updateUser)
+  } catch (error) { next(error) }
+}
+
 export const userController = {
   createNew,
   verifyAccount,
   login,
   logout,
-  refreshToken
+  refreshToken,
+  update
 }
