@@ -7,3 +7,5 @@ export const PASSWORD_RULE_MESSAGE = 'Password must include at least 1 letter, a
 export const PASSWORD_CONFIRMATION_MESSAGE = 'Password Confirmation does not match!'
 export const OBJECT_ID_RULE = /^[0-9a-fA-F]{24}$/
 export const OBJECT_ID_RULE_MESSAGE = 'Your string fails to match the Object Id pattern!'
+export const LIMIT_COMMON_FILE_SIZE = 10485760 // byte = 10 MB
+export const ALLOW_COMMON_FILE_TYPES = ['image/jpg', 'image/jpeg', 'image/png']
