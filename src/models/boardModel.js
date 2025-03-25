@@ -6,6 +6,7 @@ import { GET_DB } from '~/config/mongodb'
 import { BOARD_TYPES } from '~/utils/constants'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { pagingSkipValue } from '~/utils/algorithms'
 // Define Collection (name & schema)
 const BOARD_COLLECTION_NAME = 'boards'
 const BOARD_COLLECTION_SCHEMA = Joi.object({
@@ -16,6 +17,16 @@ const BOARD_COLLECTION_SCHEMA = Joi.object({
 
   // Lưu ý các item trong mảng columnOrderIds là ObjectId nên cần thêm pattern cho chuẩn nhé, (lúc quay video số 57 mình quên nhưng sang đầu video số 58 sẽ có nhắc lại về cái này.)
   columnOrderIds: Joi.array().items(
+    Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ).default([]),
+
+  //ownerIds là mảng các ObjectId của các người dùng được phép quản lý board này
+  ownerIds: Joi.array().items(
+    Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
+  ).default([]),
+
+  //memberIds là mảng các ObjectId của các người dùng được phép tham gia vào board này
+  memberIds: Joi.array().items(
     Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE)
   ).default([]),
 
@@ -137,6 +148,58 @@ const pullColumnOrderIds = async (column) => {
   }
 }
 
+const getBoards = async (userId, page, itemsPerPage) => {
+  try {
+    const queryConditions = [
+      //Điều kiện 01: Board chưa bị xóa
+      { _destroy: false },
+      //Điều kiện 02: Cái thằng userId đang thực hiện request này nó phải thuộc vào một trong 2 cái mảng ownerIds hoặc memberIds, sửa dụng toán tử $all của mongodb
+      {
+        $or: [
+          { ownerIds: { $all: [new ObjectId(userId)] } },
+          { memberIds: { $all: [new ObjectId(userId)] } }
+        ]
+      }
+    ]
+
+    const query = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate(
+      [
+        { $match: { $and: queryConditions } },
+        // sort title của board theo a-z (mặc đinh sẽ bị chữ B đứng trước a (theo chuẩn mã ASCII))
+        { $sort: { title: 1 } },
+        // $facet để xử lí nhiều luồn trong một query
+        { $facet: {
+        // luồng 01: lấy toàn bộ board
+          'queryBoards': [
+            { $skip: pagingSkipValue(page, itemsPerPage) }, //bỏ qua số lượng bản ghi của những page trươc đó
+            { $limit: itemsPerPage }//Giới hạn tối đa số lượng bản ghi trả về trên mọt page
+          ],
+          // luồng 02: lấy tổng tất cả số lượng bản ghi boards trong DB và trả về bản ghi có tên là countedAllBoards
+          'queryTotalBoards': [
+            { $count: 'countedAllBoards' }
+          ]
+        } }
+      ],
+      {
+        //Khai báo thêm thuộc tính conlation cocale 'en' để fix vụ chữ B hoa và a thường trên title của board
+        collation: {
+          locale: 'en'
+        }
+      }
+    ).toArray()
+
+    const res = query[0]
+
+    return {
+      boards: res.queryBoards || [],
+      totalBoards: res.queryTotalBoards[0]?.countedAllBoards || 0
+    }
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+
 export const boardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
@@ -145,5 +208,6 @@ export const boardModel = {
   getDetails,
   pushColumnOrderIds,
   pullColumnOrderIds,
-  update
+  update,
+  getBoards
 }
