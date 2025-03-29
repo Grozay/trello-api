@@ -43,10 +43,14 @@ const validateBeforeCreate = async (data) => {
 //Các trường không được phép update
 const INVALID_UPDATE_FIELDS = ['_id', 'createdAt']
 
-const createNew = async (data) => {
+const createNew = async (userId, data) => {
   try {
     const validatedData = await validateBeforeCreate(data)
-    return await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(validatedData)
+    const newBoardToAdd = {
+      ...validatedData,
+      ownerIds: [new ObjectId(userId)]
+    }
+    return await GET_DB().collection(BOARD_COLLECTION_NAME).insertOne(newBoardToAdd)
   } catch (error) {
     throw new Error(error)
   }
@@ -64,16 +68,21 @@ const findOneById = async (id) => {
 
 
 //query tổng hợp (arregate) để lấy toàn bộ Column và card thuộc về Board
-const getDetails = async (id) => {
+const getDetails = async (userId, boardId) => {
   try {
+    const queryConditions = [
+      { _id: new ObjectId(boardId) },
+      { _destroy: false },
+      {
+        $or: [
+          { ownerIds: { $all: [new ObjectId(userId)] } },
+          { memberIds: { $all: [new ObjectId(userId)] } }
+        ]
+      }
+    ]
     //tạm thời giống như findOneById
     const result = await GET_DB().collection(BOARD_COLLECTION_NAME).aggregate([
-      {
-        $match: {
-          _id: new ObjectId(id),
-          _destroy: false
-        }
-      },
+      { $match: { $and: queryConditions } },
       {
         $lookup: {
           from: columnModel.COLUMN_COLLECTION_NAME,

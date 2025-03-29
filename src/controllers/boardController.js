@@ -7,12 +7,13 @@ import { StatusCodes } from 'http-status-codes'
 // import ApiError from '~/utils/ApiError.js'
 import { boardService } from '~/services/boardService.js'
 import { jwtDecoded } from '~/middlewares/authMiddleware.js'
+
 const createNew = async (req, res, next) => {
   try {
+    const userId = req.jwtDecoded._id
     // console.log(res.body)
-
     //điều hướng đến service để xử lý
-    const createBoard = await boardService.createNew(req.body)
+    const createBoard = await boardService.createNew(userId, req.body)
     //có kết quả trả về client
     res.status(StatusCodes.CREATED).json(createBoard)
   } catch (error) { next(error)}
@@ -20,7 +21,9 @@ const createNew = async (req, res, next) => {
 
 const getDetails = async (req, res, next) => {
   try {
-    const boardDetails = await boardService.getDetails(req.params.id)
+    const userId = req.jwtDecoded._id
+    const boardId = req.params.id
+    const boardDetails = await boardService.getDetails(userId, boardId)
 
     res.status(StatusCodes.OK).json(boardDetails)
   } catch (error) { next(error)}
