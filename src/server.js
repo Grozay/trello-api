@@ -38,7 +38,7 @@ const START_SERVER = () => {
   //user apis v1
   app.use('/v1', APIs_V1)
 
-  //middleware xử lí lỗi tập trung 
+  //middleware xử lí lỗi tập trung
   app.use(errorHandlingMiddleware)
 
   if (env.BUILD_MODE === 'production') {
