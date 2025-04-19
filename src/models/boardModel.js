@@ -6,6 +6,7 @@ import { GET_DB } from '~/config/mongodb'
 import { BOARD_TYPES } from '~/utils/constants'
 import { columnModel } from '~/models/columnModel'
 import { cardModel } from '~/models/cardModel'
+import { userModel } from '~/models/userModel'
 import { pagingSkipValue } from '~/utils/algorithms'
 // Define Collection (name & schema)
 const BOARD_COLLECTION_NAME = 'boards'
@@ -97,6 +98,30 @@ const getDetails = async (userId, boardId) => {
           localField: '_id',
           foreignField: 'boardId',
           as: 'cards'
+        }
+      },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'ownerIds',
+          foreignField: '_id',
+          as: 'owners',
+          // pipeline trong lookup là xử lí một hoặc nhiều luôn cần thiết
+          // $project là chỉ định vài field khong muốn lấy bằng cách gán giá trị nó = 0
+          pipeline: [
+            { $project: { 'password': 0, 'verifyToken': 0 } }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: userModel.USER_COLLECTION_NAME,
+          localField: 'memberIds',
+          foreignField: '_id',
+          as: 'members',
+          pipeline: [
+            { $project: { 'password': 0, 'verifyToken': 0 } }
+          ]
         }
       }
     ]).toArray()
@@ -220,3 +245,4 @@ export const boardModel = {
   update,
   getBoards
 }
+

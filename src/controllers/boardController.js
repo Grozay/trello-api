@@ -6,7 +6,6 @@
 import { StatusCodes } from 'http-status-codes'
 // import ApiError from '~/utils/ApiError.js'
 import { boardService } from '~/services/boardService.js'
-import { jwtDecoded } from '~/middlewares/authMiddleware.js'
 
 const createNew = async (req, res, next) => {
   try {
