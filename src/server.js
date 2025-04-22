@@ -1,11 +1,5 @@
 /* eslint-disable no-console */
 
-/**
- * Updated by trungquandev.com's author on August 17 2023
- * YouTube: https://youtube.com/@trungquandev
- * "A bit of fragrance clings to the hand that gives flowers!"
- */
-
 import express from 'express'
 import cors from 'cors'
 import { corsOptions } from '~/config/cors'
@@ -15,7 +9,10 @@ import { env } from '~/config/environment.js'
 import { APIs_V1 } from '~/routes/v1'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware.js'
 import cookieParser from 'cookie-parser'
-
+//xử lí socket real-time với socket.io
+import socketIo from 'socket.io'
+import http from 'http'
+import { inviteUserToBoardSocket } from '~/sockets/inviteUserToBoardSocket'
 const START_SERVER = () => {
   const app = express()
 
@@ -41,14 +38,27 @@ const START_SERVER = () => {
   //middleware xử lí lỗi tập trung
   app.use(errorHandlingMiddleware)
 
+  //Tạo một cái server mới bọc thằng app của express dể làm việc với socket.io
+  const server = http.createServer(app)
+  //Khởi tạo socket.io và cấu hình cors
+  const io = socketIo(server, { cors: corsOptions })
+
+  //Tạo một cái socket để lắng nghe sự kiện connection
+  io.on('connection', (socket) => {
+    //gọi socket tùy theo tính năng
+    inviteUserToBoardSocket(socket)
+  })
+
   if (env.BUILD_MODE === 'production') {
     //production
-    app.listen(process.env.PORT, () => {
+    //Dùng server.listen để listen cái port của server thay vì app vì server đã được bọc bởi socket.io
+    server.listen(process.env.PORT, () => {
       console.log(`3.Production: Hello ${ env.AUTHOR }, BE Server is runing successfully at port: ${ process.env.PORT }/`)
     })
   } else {
     //dev
-    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+    //Dùng server.listen để listen cái port của server thay vì app vì server đã được bọc bởi socket.io
+    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
       console.log(`3. Hello ${ env.AUTHOR }, I am running at ${ env.LOCAL_DEV_APP_HOST }:${ env.LOCAL_DEV_APP_PORT }/`)
     })
   }
