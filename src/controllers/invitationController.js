@@ -10,6 +10,31 @@ const createNewBoardInvitation = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+// Lấy danh sách lời mời của người dùng
+const getInvitations = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id
+    const invitations = await invitationService.getInvitations(userId)
+    res.status(StatusCodes.OK).json(invitations)
+  } catch (error) { next(error) }
+}
+
+const updateBoardInvitation = async (req, res, next) => {
+  try {
+
+    const userId = req.jwtDecoded._id
+    //Mặc dù ở phía FE để là notification nhưng bản chất ở API này cũng chính là InvitationId
+    const { invitationId } = req.params
+    const { status } = req.body
+
+    const updatedInvitation = await invitationService.updateBoardInvitation(userId, invitationId, status)
+
+    res.status(StatusCodes.OK).json(updatedInvitation)
+  } catch (error) { next(error) }
+}
+
 export const invitationController = {
-  createNewBoardInvitation
+  createNewBoardInvitation,
+  getInvitations,
+  updateBoardInvitation
 }
